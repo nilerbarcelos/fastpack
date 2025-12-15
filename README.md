@@ -192,6 +192,55 @@ restored = fastpack.unpack(data)
 assert user == restored
 ```
 
+### Streaming
+
+For large datasets or file operations, use streaming functions:
+
+```python
+import fastpack
+
+# Write multiple objects to a file
+items = [{"id": i} for i in range(1000)]
+with open("data.bin", "wb") as f:
+    fastpack.pack_stream(items, f)
+
+# Read them back lazily (memory efficient)
+with open("data.bin", "rb") as f:
+    for item in fastpack.unpack_stream(f):
+        print(item)
+```
+
+In-memory streaming:
+
+```python
+import fastpack
+
+# Pack multiple objects to bytes
+items = [1, 2, 3, {"name": "Ana"}]
+data = fastpack.pack_many(items)
+
+# Unpack all at once
+result = fastpack.unpack_many(data)
+
+# Or iterate lazily
+for item in fastpack.iter_unpack(data):
+    print(item)
+```
+
+Single object to/from file:
+
+```python
+import fastpack
+
+# Write single object
+with open("user.bin", "wb") as f:
+    fastpack.pack_to({"name": "Ana"}, f)
+
+# Read single object
+with open("user.bin", "rb") as f:
+    user = fastpack.unpack_from(f)
+```
+
 ## Size comparison
 
 fastpack produces smaller output than JSON:
@@ -259,14 +308,19 @@ hatch run test:run
 - set, tuple, frozenset
 - Enum support
 
-### v0.3.0 — Extensibility (current)
+### v0.3.0 — Extensibility
 - `@fastpack.register` for custom types
 - Native dataclass support
 - Native NamedTuple support
 
-### v0.4.0 — Streaming
+### v0.4.0 — Streaming (current)
 - `pack_stream` / `unpack_stream`
+- `pack_many` / `unpack_many`
+- `pack_to` / `unpack_from`
 - File-like object support
+
+### v0.5.0 — Performance
+- Optional C extension
 - Async support
 
 ## License
