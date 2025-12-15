@@ -15,6 +15,24 @@ from uuid import UUID
 from fastpack import types as _types
 
 
+# Pre-compiled struct formats for better performance
+_STRUCT_UINT16 = struct.Struct(">H")
+_STRUCT_UINT32 = struct.Struct(">I")
+_STRUCT_UINT64 = struct.Struct(">Q")
+_STRUCT_INT8 = struct.Struct(">b")
+_STRUCT_INT16 = struct.Struct(">h")
+_STRUCT_INT32 = struct.Struct(">i")
+_STRUCT_INT64 = struct.Struct(">q")
+_STRUCT_FLOAT64 = struct.Struct(">d")
+_STRUCT_FLOAT32 = struct.Struct(">f")
+
+# Pre-computed byte constants for common markers
+_BYTES_NONE = bytes([0xC0])
+_BYTES_FALSE = bytes([0xC2])
+_BYTES_TRUE = bytes([0xC3])
+_BYTES_FLOAT64 = bytes([0xCB])
+
+
 # Format markers (MessagePack compatible)
 _NONE = 0xC0
 _FALSE = 0xC2
@@ -110,14 +128,18 @@ def unpack(data: bytes) -> Any:
 
 def _pack_value(obj: Any, buffer: bytearray) -> None:
     """Pack a single value into the buffer."""
+    # Local references for faster access
+    _extend = buffer.extend
+    _append = buffer.append
+
     if obj is None:
-        buffer.append(_NONE)
+        _extend(_BYTES_NONE)
 
     elif obj is True:
-        buffer.append(_TRUE)
+        _extend(_BYTES_TRUE)
 
     elif obj is False:
-        buffer.append(_FALSE)
+        _extend(_BYTES_FALSE)
 
     elif isinstance(obj, Enum):
         _pack_enum(obj, buffer)
@@ -194,31 +216,31 @@ def _pack_int(value: int, buffer: bytearray) -> None:
         buffer.append(value)
     elif 0 <= value <= 0xFFFF:
         buffer.append(_UINT16)
-        buffer.extend(struct.pack(">H", value))
+        buffer.extend(_STRUCT_UINT16.pack(value))
     elif 0 <= value <= 0xFFFFFFFF:
         buffer.append(_UINT32)
-        buffer.extend(struct.pack(">I", value))
+        buffer.extend(_STRUCT_UINT32.pack(value))
     elif 0 <= value <= 0xFFFFFFFFFFFFFFFF:
         buffer.append(_UINT64)
-        buffer.extend(struct.pack(">Q", value))
+        buffer.extend(_STRUCT_UINT64.pack(value))
     elif -128 <= value < 0:
         buffer.append(_INT8)
-        buffer.extend(struct.pack(">b", value))
+        buffer.extend(_STRUCT_INT8.pack(value))
     elif -32768 <= value < 0:
         buffer.append(_INT16)
-        buffer.extend(struct.pack(">h", value))
+        buffer.extend(_STRUCT_INT16.pack(value))
     elif -2147483648 <= value < 0:
         buffer.append(_INT32)
-        buffer.extend(struct.pack(">i", value))
+        buffer.extend(_STRUCT_INT32.pack(value))
     else:
         buffer.append(_INT64)
-        buffer.extend(struct.pack(">q", value))
+        buffer.extend(_STRUCT_INT64.pack(value))
 
 
 def _pack_float(value: float, buffer: bytearray) -> None:
     """Pack a float value (always as float64 for precision)."""
     buffer.append(_FLOAT64)
-    buffer.extend(struct.pack(">d", value))
+    buffer.extend(_STRUCT_FLOAT64.pack(value))
 
 
 def _pack_str(value: str, buffer: bytearray) -> None:
@@ -234,10 +256,10 @@ def _pack_str(value: str, buffer: bytearray) -> None:
         buffer.append(length)
     elif length <= 0xFFFF:
         buffer.append(_STR16)
-        buffer.extend(struct.pack(">H", length))
+        buffer.extend(_STRUCT_UINT16.pack(length))
     else:
         buffer.append(_STR32)
-        buffer.extend(struct.pack(">I", length))
+        buffer.extend(_STRUCT_UINT32.pack(length))
 
     buffer.extend(encoded)
 
@@ -251,10 +273,10 @@ def _pack_bytes(value: bytes, buffer: bytearray) -> None:
         buffer.append(length)
     elif length <= 0xFFFF:
         buffer.append(_BIN16)
-        buffer.extend(struct.pack(">H", length))
+        buffer.extend(_STRUCT_UINT16.pack(length))
     else:
         buffer.append(_BIN32)
-        buffer.extend(struct.pack(">I", length))
+        buffer.extend(_STRUCT_UINT32.pack(length))
 
     buffer.extend(value)
 
@@ -268,10 +290,10 @@ def _pack_list(value: list, buffer: bytearray) -> None:
         buffer.append(0x90 | length)
     elif length <= 0xFFFF:
         buffer.append(_ARRAY16)
-        buffer.extend(struct.pack(">H", length))
+        buffer.extend(_STRUCT_UINT16.pack(length))
     else:
         buffer.append(_ARRAY32)
-        buffer.extend(struct.pack(">I", length))
+        buffer.extend(_STRUCT_UINT32.pack(length))
 
     for item in value:
         _pack_value(item, buffer)
@@ -286,10 +308,10 @@ def _pack_dict(value: dict, buffer: bytearray) -> None:
         buffer.append(0x80 | length)
     elif length <= 0xFFFF:
         buffer.append(_MAP16)
-        buffer.extend(struct.pack(">H", length))
+        buffer.extend(_STRUCT_UINT16.pack(length))
     else:
         buffer.append(_MAP32)
-        buffer.extend(struct.pack(">I", length))
+        buffer.extend(_STRUCT_UINT32.pack(length))
 
     for k, v in value.items():
         _pack_value(k, buffer)
@@ -321,11 +343,11 @@ def _pack_ext(type_code: int, data: bytes, buffer: bytearray) -> None:
         buffer.append(type_code)
     elif length <= 0xFFFF:
         buffer.append(_EXT16)
-        buffer.extend(struct.pack(">H", length))
+        buffer.extend(_STRUCT_UINT16.pack(length))
         buffer.append(type_code)
     else:
         buffer.append(_EXT32)
-        buffer.extend(struct.pack(">I", length))
+        buffer.extend(_STRUCT_UINT32.pack(length))
         buffer.append(type_code)
 
     buffer.extend(data)
@@ -351,7 +373,7 @@ def _pack_time(value: time, buffer: bytearray) -> None:
 
 def _pack_timedelta(value: timedelta, buffer: bytearray) -> None:
     """Pack a timedelta value as total seconds (float)."""
-    data = struct.pack(">d", value.total_seconds())
+    data = _STRUCT_FLOAT64.pack(value.total_seconds())
     _pack_ext(_EXT_TIMEDELTA, data, buffer)
 
 
@@ -485,7 +507,7 @@ def _unpack_value(data: bytes, offset: int) -> tuple[Any, int]:
 
     # Negative fixint (0xE0 - 0xFF)
     if marker >= 0xE0:
-        return struct.unpack(">b", bytes([marker]))[0], offset
+        return _STRUCT_INT8.unpack(bytes([marker]))[0], offset
 
     # None
     if marker == _NONE:
@@ -503,47 +525,47 @@ def _unpack_value(data: bytes, offset: int) -> tuple[Any, int]:
         offset += 1
         return data[offset:offset + length], offset + length
     if marker == _BIN16:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = _STRUCT_UINT16.unpack_from(data, offset)[0]
         offset += 2
         return data[offset:offset + length], offset + length
     if marker == _BIN32:
-        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        length = _STRUCT_UINT32.unpack_from(data, offset)[0]
         offset += 4
         return data[offset:offset + length], offset + length
 
     # Float
     if marker == _FLOAT32:
-        value = struct.unpack(">f", data[offset:offset + 4])[0]
+        value = _STRUCT_FLOAT32.unpack_from(data, offset)[0]
         return value, offset + 4
     if marker == _FLOAT64:
-        value = struct.unpack(">d", data[offset:offset + 8])[0]
+        value = _STRUCT_FLOAT64.unpack_from(data, offset)[0]
         return value, offset + 8
 
     # Unsigned integers
     if marker == _UINT8:
         return data[offset], offset + 1
     if marker == _UINT16:
-        value = struct.unpack(">H", data[offset:offset + 2])[0]
+        value = _STRUCT_UINT16.unpack_from(data, offset)[0]
         return value, offset + 2
     if marker == _UINT32:
-        value = struct.unpack(">I", data[offset:offset + 4])[0]
+        value = _STRUCT_UINT32.unpack_from(data, offset)[0]
         return value, offset + 4
     if marker == _UINT64:
-        value = struct.unpack(">Q", data[offset:offset + 8])[0]
+        value = _STRUCT_UINT64.unpack_from(data, offset)[0]
         return value, offset + 8
 
     # Signed integers
     if marker == _INT8:
-        value = struct.unpack(">b", data[offset:offset + 1])[0]
+        value = _STRUCT_INT8.unpack_from(data, offset)[0]
         return value, offset + 1
     if marker == _INT16:
-        value = struct.unpack(">h", data[offset:offset + 2])[0]
+        value = _STRUCT_INT16.unpack_from(data, offset)[0]
         return value, offset + 2
     if marker == _INT32:
-        value = struct.unpack(">i", data[offset:offset + 4])[0]
+        value = _STRUCT_INT32.unpack_from(data, offset)[0]
         return value, offset + 4
     if marker == _INT64:
-        value = struct.unpack(">q", data[offset:offset + 8])[0]
+        value = _STRUCT_INT64.unpack_from(data, offset)[0]
         return value, offset + 8
 
     # Strings
@@ -552,31 +574,31 @@ def _unpack_value(data: bytes, offset: int) -> tuple[Any, int]:
         offset += 1
         return _unpack_str(data, offset, length)
     if marker == _STR16:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = _STRUCT_UINT16.unpack_from(data, offset)[0]
         offset += 2
         return _unpack_str(data, offset, length)
     if marker == _STR32:
-        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        length = _STRUCT_UINT32.unpack_from(data, offset)[0]
         offset += 4
         return _unpack_str(data, offset, length)
 
     # Arrays
     if marker == _ARRAY16:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = _STRUCT_UINT16.unpack_from(data, offset)[0]
         offset += 2
         return _unpack_array(data, offset, length)
     if marker == _ARRAY32:
-        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        length = _STRUCT_UINT32.unpack_from(data, offset)[0]
         offset += 4
         return _unpack_array(data, offset, length)
 
     # Maps
     if marker == _MAP16:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = _STRUCT_UINT16.unpack_from(data, offset)[0]
         offset += 2
         return _unpack_map(data, offset, length)
     if marker == _MAP32:
-        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        length = _STRUCT_UINT32.unpack_from(data, offset)[0]
         offset += 4
         return _unpack_map(data, offset, length)
 
@@ -609,12 +631,12 @@ def _unpack_value(data: bytes, offset: int) -> tuple[Any, int]:
         offset += 2
         return _unpack_ext(type_code, data[offset:offset + length]), offset + length
     if marker == _EXT16:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = _STRUCT_UINT16.unpack_from(data, offset)[0]
         type_code = data[offset + 2]
         offset += 3
         return _unpack_ext(type_code, data[offset:offset + length]), offset + length
     if marker == _EXT32:
-        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        length = _STRUCT_UINT32.unpack_from(data, offset)[0]
         type_code = data[offset + 4]
         offset += 5
         return _unpack_ext(type_code, data[offset:offset + length]), offset + length
@@ -659,7 +681,7 @@ def _unpack_ext(type_code: int, data: bytes) -> Any:
         return time.fromisoformat(data.decode("utf-8"))
 
     if type_code == _EXT_TIMEDELTA:
-        seconds = struct.unpack(">d", data)[0]
+        seconds = _STRUCT_FLOAT64.unpack(data)[0]
         return timedelta(seconds=seconds)
 
     if type_code == _EXT_DECIMAL:

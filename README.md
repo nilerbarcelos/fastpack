@@ -313,13 +313,18 @@ hatch run test:run
 - Native dataclass support
 - Native NamedTuple support
 
-### v0.4.0 — Streaming (current)
+### v0.4.0 — Streaming
 - `pack_stream` / `unpack_stream`
 - `pack_many` / `unpack_many`
 - `pack_to` / `unpack_from`
 - File-like object support
 
-### v0.5.0 — Performance
+### v0.5.0 — Performance (current)
+- Pre-compiled struct formats
+- Optimized unpack with `unpack_from`
+- Local method caching
+
+### v0.6.0 — Future
 - Optional C extension
 - Async support
 
