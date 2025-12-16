@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typepack"
-version = "0.6.0"
+version = "0.6.1"
 description = "Fast, safe binary serialization for Python supporting dataclasses, datetime, Decimal, UUID and custom types"
 readme = "README.md"
 license = {text = "MIT"}
