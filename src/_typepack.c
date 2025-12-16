@@ -1,5 +1,5 @@
 /*
- * fastpack C extension using PyBytesWriter API (PEP 782)
+ * typepack C extension using PyBytesWriter API (PEP 782)
  *
  * This module provides high-performance binary serialization
  * using Python 3.15+ PyBytesWriter C API for efficient byte buffer management.
@@ -441,7 +441,7 @@ pack_value(PyBytesWriter *writer, PyObject *obj)
 
 
 static PyObject *
-fastpack_pack(PyObject *self, PyObject *args)
+typepack_pack(PyObject *self, PyObject *args)
 {
     PyObject *obj;
 
@@ -470,10 +470,10 @@ fastpack_pack(PyObject *self, PyObject *args)
  */
 
 static PyObject *
-fastpack_pack(PyObject *self, PyObject *args)
+typepack_pack(PyObject *self, PyObject *args)
 {
     /* Import and call the Python implementation */
-    PyObject *core_module = PyImport_ImportModule("fastpack.core");
+    PyObject *core_module = PyImport_ImportModule("typepack.core");
     if (core_module == NULL) {
         return NULL;
     }
@@ -784,7 +784,7 @@ error:
 
 
 static PyObject *
-fastpack_unpack(PyObject *self, PyObject *args)
+typepack_unpack(PyObject *self, PyObject *args)
 {
     Py_buffer buffer;
 
@@ -808,7 +808,7 @@ fastpack_unpack(PyObject *self, PyObject *args)
  * Check if C extension has PyBytesWriter support
  */
 static PyObject *
-fastpack_has_pybyteswriter(PyObject *self, PyObject *Py_UNUSED(args))
+typepack_has_pybyteswriter(PyObject *self, PyObject *Py_UNUSED(args))
 {
 #if HAVE_PYBYTESWRITER
     Py_RETURN_TRUE;
@@ -822,28 +822,28 @@ fastpack_has_pybyteswriter(PyObject *self, PyObject *Py_UNUSED(args))
  * Module definition
  */
 
-static PyMethodDef fastpack_methods[] = {
-    {"pack", fastpack_pack, METH_VARARGS,
+static PyMethodDef typepack_methods[] = {
+    {"pack", typepack_pack, METH_VARARGS,
      "Serialize a Python object to binary format."},
-    {"unpack", fastpack_unpack, METH_VARARGS,
+    {"unpack", typepack_unpack, METH_VARARGS,
      "Deserialize binary data to a Python object."},
-    {"has_pybyteswriter", fastpack_has_pybyteswriter, METH_NOARGS,
+    {"has_pybyteswriter", typepack_has_pybyteswriter, METH_NOARGS,
      "Return True if compiled with PyBytesWriter support (Python 3.15+)."},
     {NULL, NULL, 0, NULL}
 };
 
 
-static struct PyModuleDef fastpack_module = {
+static struct PyModuleDef typepack_module = {
     PyModuleDef_HEAD_INIT,
-    "_fastpack",
+    "_typepack",
     "Fast binary serialization C extension",
     -1,
-    fastpack_methods
+    typepack_methods
 };
 
 
 PyMODINIT_FUNC
-PyInit__fastpack(void)
+PyInit__typepack(void)
 {
-    return PyModule_Create(&fastpack_module);
+    return PyModule_Create(&typepack_module);
 }
