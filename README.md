@@ -1,23 +1,17 @@
 # fastpack
 
-A fast, zero-dependency binary serialization library for Python.
+Fast, safe binary serialization for Python supporting dataclasses, datetime, Decimal, UUID and custom types.
 
-## Why?
+## Features
 
-Binary serialization in Python has trade-offs:
-
-| Library | Issue |
-|---------|-------|
-| **pickle** | Insecure, Python-only |
-| **json** | Slow, verbose, limited types |
-| **msgpack** | Requires C extension, limited Python type support |
-| **protobuf** | Schema required, complex setup |
-
-**fastpack** is designed to be:
-- Zero dependencies (uses only stdlib)
-- Safe (no arbitrary code execution)
-- Fast (compact binary format)
-- Python-friendly (native type support)
+- **Zero dependencies** - uses only Python standard library
+- **Safe** - no arbitrary code execution (unlike pickle)
+- **Compact** - 35-45% smaller than JSON
+- **Native Python types** - datetime, Decimal, UUID, Enum, dataclass, NamedTuple
+- **Extensible** - register custom types with `@fastpack.register`
+- **Streaming** - memory-efficient processing for large datasets
+- **Optional C extension** - ~1.5x faster serialization
+- **MessagePack-compatible** - interoperable binary format
 
 ## Installation
 
@@ -25,7 +19,7 @@ Binary serialization in Python has trade-offs:
 pip install fastpack
 ```
 
-## Usage
+## Quick Start
 
 ```python
 import fastpack
@@ -35,10 +29,9 @@ data = fastpack.pack({"name": "Ana", "age": 30, "active": True})
 
 # Deserialize
 obj = fastpack.unpack(data)
-print(obj)  # {'name': 'Ana', 'age': 30, 'active': True}
 ```
 
-### Supported types
+## Supported Types
 
 | Type | Example |
 |------|---------|
@@ -63,7 +56,9 @@ print(obj)  # {'name': 'Ana', 'age': 30, 'active': True}
 | `dataclass` | `@dataclass class User` |
 | `NamedTuple` | `class Point(NamedTuple)` |
 
-### Python types
+## Examples
+
+### Native Python Types
 
 ```python
 from datetime import datetime
@@ -100,32 +95,10 @@ class User:
 user = User("Ana", 30)
 data = fastpack.pack(user)
 restored = fastpack.unpack(data)
-
-print(restored)
 # {'__dataclass__': 'User', '__module__': '__main__', 'name': 'Ana', 'age': 30}
 ```
 
-### NamedTuples
-
-```python
-from typing import NamedTuple
-import fastpack
-
-class Point(NamedTuple):
-    x: int
-    y: int
-
-point = Point(10, 20)
-data = fastpack.pack(point)
-restored = fastpack.unpack(data)
-
-print(restored)
-# {'__namedtuple__': 'Point', '__module__': '__main__', 'x': 10, 'y': 20}
-```
-
-### Custom types
-
-Use `@fastpack.register` to add support for your own types:
+### Custom Types
 
 ```python
 import fastpack
@@ -145,105 +118,26 @@ class Money:
 
 money = Money(1000, "USD")
 data = fastpack.pack(money)
-restored = fastpack.unpack(data)
-
-print(restored)  # Money(amount=1000, currency='USD')
-```
-
-For dataclasses and NamedTuples, registration enables automatic reconstruction:
-
-```python
-from dataclasses import dataclass
-import fastpack
-
-@fastpack.register
-@dataclass
-class Point3D:
-    x: float
-    y: float
-    z: float
-
-point = Point3D(1.0, 2.0, 3.0)
-data = fastpack.pack(point)
-restored = fastpack.unpack(data)
-
-print(type(restored))  # <class 'Point3D'>
-print(restored)        # Point3D(x=1.0, y=2.0, z=3.0)
-```
-
-### Nested structures
-
-```python
-import fastpack
-
-user = {
-    "id": 123,
-    "name": "Ana",
-    "emails": ["ana@work.com", "ana@home.com"],
-    "settings": {
-        "theme": "dark",
-        "notifications": True
-    }
-}
-
-data = fastpack.pack(user)
-restored = fastpack.unpack(data)
-
-assert user == restored
+restored = fastpack.unpack(data)  # Money(amount=1000, currency='USD')
 ```
 
 ### Streaming
 
-For large datasets or file operations, use streaming functions:
-
 ```python
 import fastpack
 
-# Write multiple objects to a file
+# Write multiple objects to file
 items = [{"id": i} for i in range(1000)]
 with open("data.bin", "wb") as f:
     fastpack.pack_stream(items, f)
 
-# Read them back lazily (memory efficient)
+# Read lazily (memory efficient)
 with open("data.bin", "rb") as f:
     for item in fastpack.unpack_stream(f):
-        print(item)
+        process(item)
 ```
 
-In-memory streaming:
-
-```python
-import fastpack
-
-# Pack multiple objects to bytes
-items = [1, 2, 3, {"name": "Ana"}]
-data = fastpack.pack_many(items)
-
-# Unpack all at once
-result = fastpack.unpack_many(data)
-
-# Or iterate lazily
-for item in fastpack.iter_unpack(data):
-    print(item)
-```
-
-Single object to/from file:
-
-```python
-import fastpack
-
-# Write single object
-with open("user.bin", "wb") as f:
-    fastpack.pack_to({"name": "Ana"}, f)
-
-# Read single object
-with open("user.bin", "rb") as f:
-    user = fastpack.unpack_from(f)
-```
-
-## Size comparison
-
-fastpack produces smaller output than JSON:
+## Size Comparison
 
 ```python
 import json
@@ -254,79 +148,95 @@ obj = {"name": "Ana", "age": 30, "active": True}
 json_size = len(json.dumps(obj).encode())  # 42 bytes
 pack_size = len(fastpack.pack(obj))        # 27 bytes
 
-print(f"JSON: {json_size} bytes")
-print(f"fastpack: {pack_size} bytes")
-print(f"Reduction: {100 - (pack_size/json_size*100):.0f}%")
-# JSON: 42 bytes
-# fastpack: 27 bytes
-# Reduction: 36%
+# fastpack: 36% smaller than JSON
 ```
 
-## Binary format
+## Performance
 
-fastpack uses a MessagePack-compatible binary format for interoperability.
+fastpack includes an optional C extension for improved performance:
+
+```python
+import fastpack
+
+fastpack.is_accelerated()     # True if C extension loaded
+fastpack.has_pybyteswriter()  # True if Python 3.15+ (PyBytesWriter API)
+```
+
+| Operation | C Extension | Pure Python |
+|-----------|-------------|-------------|
+| pack/unpack | ~1.5x faster | baseline |
+
+## API Reference
+
+### Core Functions
+
+```python
+fastpack.pack(obj) -> bytes        # Serialize object
+fastpack.unpack(data) -> Any       # Deserialize bytes
+```
+
+### Streaming Functions
+
+```python
+fastpack.pack_to(obj, file)        # Write single object to file
+fastpack.unpack_from(file) -> Any  # Read single object from file
+
+fastpack.pack_stream(items, file)  # Write multiple objects
+fastpack.unpack_stream(file)       # Iterate over objects (lazy)
+
+fastpack.pack_many(items) -> bytes # Serialize multiple to bytes
+fastpack.unpack_many(data) -> list # Deserialize all at once
+fastpack.iter_unpack(data)         # Iterate over bytes (lazy)
+```
+
+### Type Registration
+
+```python
+@fastpack.register
+class MyType:
+    def __fastpack_encode__(self): ...
+    @classmethod
+    def __fastpack_decode__(cls, data): ...
+
+fastpack.clear_registry()          # Reset type registry
+```
+
+### Introspection
+
+```python
+fastpack.is_accelerated() -> bool      # C extension loaded?
+fastpack.has_pybyteswriter() -> bool   # PyBytesWriter available?
+```
+
+## Binary Format
+
+fastpack uses MessagePack-compatible binary format:
 
 | Type | Format |
 |------|--------|
-| fixint | `0x00` - `0x7F` (0-127) |
-| fixmap | `0x80` - `0x8F` (0-15 elements) |
-| fixarray | `0x90` - `0x9F` (0-15 elements) |
-| fixstr | `0xA0` - `0xBF` (0-31 bytes) |
+| fixint | `0x00` - `0x7F` |
+| fixmap | `0x80` - `0x8F` |
+| fixarray | `0x90` - `0x9F` |
+| fixstr | `0xA0` - `0xBF` |
 | nil | `0xC0` |
 | false | `0xC2` |
 | true | `0xC3` |
 | float64 | `0xCB` + 8 bytes |
-| uint/int | `0xCC` - `0xD3` + 1-8 bytes |
-| str | `0xD9` - `0xDB` + length + data |
-| array | `0xDC` - `0xDD` + length + items |
-| map | `0xDE` - `0xDF` + length + pairs |
+| uint/int | `0xCC` - `0xD3` |
+| str | `0xD9` - `0xDB` |
+| array | `0xDC` - `0xDD` |
+| map | `0xDE` - `0xDF` |
 
-## Development
+## Comparison
 
-```bash
-# Clone the repository
-git clone https://github.com/nilerbarcelos/fastpack.git
-cd fastpack
-
-# Install dev dependencies
-pip install hatch
-
-# Run tests
-hatch run test:run
-```
-
-## Roadmap
-
-### v0.1.0 — MVP
-- Basic types: int, float, str, bytes, bool, None, list, dict
-- pack/unpack API
-- Zero dependencies
-
-### v0.2.0 — Python types
-- datetime, date, time, timedelta
-- Decimal, UUID
-- set, tuple, frozenset
-- Enum support
-
-### v0.3.0 — Extensibility
-- `@fastpack.register` for custom types
-- Native dataclass support
-- Native NamedTuple support
-
-### v0.4.0 — Streaming
-- `pack_stream` / `unpack_stream`
-- `pack_many` / `unpack_many`
-- `pack_to` / `unpack_from`
-- File-like object support
-
-### v0.5.0 — Performance (current)
-- Pre-compiled struct formats
-- Optimized unpack with `unpack_from`
-- Local method caching
-
-### v0.6.0 — Future
-- Optional C extension
-- Async support
+| Feature | fastpack | msgpack | pickle | json |
+|---------|----------|---------|--------|------|
+| Safe | Yes | Yes | **No** | Yes |
+| Zero deps | Yes | No | Yes | Yes |
+| Python types | Yes | Limited | Yes | Limited |
+| Dataclasses | Yes | No | Yes | No |
+| Compact | Yes | Yes | No | No |
+| Streaming | Yes | Yes | No | No |
 
 ## License
 
