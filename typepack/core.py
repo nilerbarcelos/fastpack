@@ -1,5 +1,5 @@
 """
-Core serialization functions for fastpack.
+Core serialization functions for typepack.
 
 Binary format based on MessagePack specification for interoperability.
 """
@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any, Type
 from uuid import UUID
 
-from fastpack import types as _types
+from typepack import types as _types
 
 
 # Pre-compiled struct formats for better performance

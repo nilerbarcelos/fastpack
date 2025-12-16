@@ -1,19 +1,19 @@
 """
-fastpack - A fast binary serialization library for Python.
+typepack - Fast, safe binary serialization for Python.
 
 Uses C extension with PyBytesWriter API (Python 3.15+) for maximum performance,
 with automatic fallback to pure Python implementation.
 
 Usage:
-    >>> import fastpack
-    >>> data = fastpack.pack({"name": "Ana", "age": 30})
-    >>> obj = fastpack.unpack(data)
+    >>> import typepack
+    >>> data = typepack.pack({"name": "Ana", "age": 30})
+    >>> obj = typepack.unpack(data)
     >>> obj
     {'name': 'Ana', 'age': 30}
 
 Custom types:
     >>> from dataclasses import dataclass
-    >>> import fastpack
+    >>> import typepack
     >>>
     >>> @dataclass
     ... class User:
@@ -21,22 +21,22 @@ Custom types:
     ...     age: int
     >>>
     >>> user = User("Ana", 30)
-    >>> data = fastpack.pack(user)
-    >>> fastpack.unpack(data)
+    >>> data = typepack.pack(user)
+    >>> typepack.unpack(data)
     {'__dataclass__': 'User', '__module__': '__main__', 'name': 'Ana', 'age': 30}
 
 Streaming:
-    >>> import fastpack
+    >>> import typepack
     >>> with open("data.bin", "wb") as f:
-    ...     fastpack.pack_stream([1, 2, 3], f)
+    ...     typepack.pack_stream([1, 2, 3], f)
     >>> with open("data.bin", "rb") as f:
-    ...     list(fastpack.unpack_stream(f))
+    ...     list(typepack.unpack_stream(f))
     [1, 2, 3]
 
 Check implementation:
-    >>> import fastpack
-    >>> fastpack.is_accelerated()  # True if using C extension
-    >>> fastpack.has_pybyteswriter()  # True if PyBytesWriter is available
+    >>> import typepack
+    >>> typepack.is_accelerated()  # True if using C extension
+    >>> typepack.has_pybyteswriter()  # True if PyBytesWriter is available
 """
 
 # Try to import C extension first
@@ -44,17 +44,17 @@ _USE_C_EXTENSION = False
 _HAS_PYBYTESWRITER = False
 
 try:
-    from fastpack._fastpack import pack as _c_pack, unpack as _c_unpack
-    from fastpack._fastpack import has_pybyteswriter as _has_pybyteswriter
+    from typepack._typepack import pack as _c_pack, unpack as _c_unpack
+    from typepack._typepack import has_pybyteswriter as _has_pybyteswriter
     _USE_C_EXTENSION = True
     _HAS_PYBYTESWRITER = _has_pybyteswriter()
 except ImportError:
     pass
 
 # Import pure Python implementation
-from fastpack.core import pack as _py_pack, unpack as _py_unpack
-from fastpack.types import register, clear_registry
-from fastpack.stream import (
+from typepack.core import pack as _py_pack, unpack as _py_unpack
+from typepack.types import register, clear_registry
+from typepack.stream import (
     pack_to,
     unpack_from,
     pack_stream,

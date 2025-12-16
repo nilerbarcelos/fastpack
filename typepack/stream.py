@@ -1,5 +1,5 @@
 """
-Streaming serialization for fastpack.
+Streaming serialization for typepack.
 
 Provides functions to serialize/deserialize multiple objects
 to/from file-like objects or iterators.
@@ -8,7 +8,7 @@ to/from file-like objects or iterators.
 import struct
 from typing import Any, BinaryIO, Iterator, Iterable
 
-from fastpack.core import pack, _unpack_value
+from typepack.core import pack, _unpack_value
 
 
 def pack_to(obj: Any, file: BinaryIO) -> int:
@@ -24,7 +24,7 @@ def pack_to(obj: Any, file: BinaryIO) -> int:
 
     Example:
         >>> with open("data.bin", "wb") as f:
-        ...     fastpack.pack_to({"name": "Ana"}, f)
+        ...     typepack.pack_to({"name": "Ana"}, f)
     """
     data = pack(obj)
     file.write(data)
@@ -46,7 +46,7 @@ def unpack_from(file: BinaryIO) -> Any:
 
     Example:
         >>> with open("data.bin", "rb") as f:
-        ...     obj = fastpack.unpack_from(f)
+        ...     obj = typepack.unpack_from(f)
     """
     data = file.read()
     if not data:
@@ -72,7 +72,7 @@ def pack_stream(objects: Iterable[Any], file: BinaryIO) -> int:
     Example:
         >>> items = [{"id": 1}, {"id": 2}, {"id": 3}]
         >>> with open("items.bin", "wb") as f:
-        ...     fastpack.pack_stream(items, f)
+        ...     typepack.pack_stream(items, f)
     """
     total_bytes = 0
     for obj in objects:
@@ -100,7 +100,7 @@ def unpack_stream(file: BinaryIO) -> Iterator[Any]:
 
     Example:
         >>> with open("items.bin", "rb") as f:
-        ...     for item in fastpack.unpack_stream(f):
+        ...     for item in typepack.unpack_stream(f):
         ...         print(item)
     """
     while True:
@@ -170,8 +170,8 @@ def pack_many(objects: Iterable[Any]) -> bytes:
         Binary data containing all serialized objects.
 
     Example:
-        >>> data = fastpack.pack_many([{"id": 1}, {"id": 2}])
-        >>> list(fastpack.iter_unpack(data))
+        >>> data = typepack.pack_many([{"id": 1}, {"id": 2}])
+        >>> list(typepack.iter_unpack(data))
         [{'id': 1}, {'id': 2}]
     """
     buffer = bytearray()
@@ -196,8 +196,8 @@ def unpack_many(data: bytes) -> list[Any]:
         List of deserialized Python objects.
 
     Example:
-        >>> data = fastpack.pack_many([1, 2, 3])
-        >>> fastpack.unpack_many(data)
+        >>> data = typepack.pack_many([1, 2, 3])
+        >>> typepack.unpack_many(data)
         [1, 2, 3]
     """
     return list(iter_unpack(data))

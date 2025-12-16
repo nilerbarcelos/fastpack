@@ -38,7 +38,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/project/fastpack/
+      url: https://pypi.org/project/typepack/
 
     steps:
       - name: Retrieve release distributions

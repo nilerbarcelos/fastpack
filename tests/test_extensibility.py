@@ -1,10 +1,10 @@
-"""Tests for fastpack extensibility features (v0.3.0)."""
+"""Tests for typepack extensibility features (v0.3.0)."""
 
 import pytest
 from dataclasses import dataclass
 from typing import NamedTuple
 
-import fastpack
+import typepack
 
 
 class TestDataclass:
@@ -17,8 +17,8 @@ class TestDataclass:
             age: int
 
         user = User("Ana", 30)
-        data = fastpack.pack(user)
-        result = fastpack.unpack(data)
+        data = typepack.pack(user)
+        result = typepack.unpack(data)
 
         assert result["__dataclass__"] == "User"
         assert result["name"] == "Ana"
@@ -32,8 +32,8 @@ class TestDataclass:
             description: str = None
 
         product = Product("Widget", 9.99)
-        data = fastpack.pack(product)
-        result = fastpack.unpack(data)
+        data = typepack.pack(product)
+        result = typepack.unpack(data)
 
         assert result["__dataclass__"] == "Product"
         assert result["name"] == "Widget"
@@ -54,8 +54,8 @@ class TestDataclass:
         address = Address("123 Main St", "Springfield")
         person = Person("John", {"street": "123 Main St", "city": "Springfield"})
 
-        data = fastpack.pack(person)
-        result = fastpack.unpack(data)
+        data = typepack.pack(person)
+        result = typepack.unpack(data)
 
         assert result["__dataclass__"] == "Person"
         assert result["name"] == "John"
@@ -68,8 +68,8 @@ class TestDataclass:
             items: list
 
         order = Order(123, ["apple", "banana", "cherry"])
-        data = fastpack.pack(order)
-        result = fastpack.unpack(data)
+        data = typepack.pack(order)
+        result = typepack.unpack(data)
 
         assert result["__dataclass__"] == "Order"
         assert result["id"] == 123
@@ -85,8 +85,8 @@ class TestNamedTuple:
             y: int
 
         point = Point(10, 20)
-        data = fastpack.pack(point)
-        result = fastpack.unpack(data)
+        data = typepack.pack(point)
+        result = typepack.unpack(data)
 
         assert result["__namedtuple__"] == "Point"
         assert result["x"] == 10
@@ -98,8 +98,8 @@ class TestNamedTuple:
             port: int = 8080
 
         config = Config("localhost")
-        data = fastpack.pack(config)
-        result = fastpack.unpack(data)
+        data = typepack.pack(config)
+        result = typepack.unpack(data)
 
         assert result["__namedtuple__"] == "Config"
         assert result["host"] == "localhost"
@@ -113,8 +113,8 @@ class TestNamedTuple:
             score: float
 
         record = Record(1, "Test", True, 95.5)
-        data = fastpack.pack(record)
-        result = fastpack.unpack(data)
+        data = typepack.pack(record)
+        result = typepack.unpack(data)
 
         assert result["__namedtuple__"] == "Record"
         assert result["id"] == 1
@@ -124,39 +124,39 @@ class TestNamedTuple:
 
 
 class TestRegister:
-    """Tests for @fastpack.register decorator."""
+    """Tests for @typepack.register decorator."""
 
     def setup_method(self):
         """Clear registry before each test."""
-        fastpack.clear_registry()
+        typepack.clear_registry()
 
     def test_register_with_custom_encode_decode(self):
-        @fastpack.register
+        @typepack.register
         class Money:
             def __init__(self, amount: int, currency: str):
                 self.amount = amount
                 self.currency = currency
 
-            def __fastpack_encode__(self):
+            def __typepack_encode__(self):
                 return {"amount": self.amount, "currency": self.currency}
 
             @classmethod
-            def __fastpack_decode__(cls, data):
+            def __typepack_decode__(cls, data):
                 return cls(data["amount"], data["currency"])
 
             def __eq__(self, other):
                 return self.amount == other.amount and self.currency == other.currency
 
         money = Money(1000, "USD")
-        data = fastpack.pack(money)
-        result = fastpack.unpack(data)
+        data = typepack.pack(money)
+        result = typepack.unpack(data)
 
         assert isinstance(result, Money)
         assert result.amount == 1000
         assert result.currency == "USD"
 
     def test_register_dataclass(self):
-        @fastpack.register
+        @typepack.register
         @dataclass
         class Point3D:
             x: float
@@ -164,8 +164,8 @@ class TestRegister:
             z: float
 
         point = Point3D(1.0, 2.0, 3.0)
-        data = fastpack.pack(point)
-        result = fastpack.unpack(data)
+        data = typepack.pack(point)
+        result = typepack.unpack(data)
 
         assert isinstance(result, Point3D)
         assert result.x == 1.0
@@ -178,11 +178,11 @@ class TestRegister:
             g: int
             b: int
 
-        fastpack.register(Color)
+        typepack.register(Color)
 
         color = Color(255, 128, 0)
-        data = fastpack.pack(color)
-        result = fastpack.unpack(data)
+        data = typepack.pack(color)
+        result = typepack.unpack(data)
 
         assert isinstance(result, Color)
         assert result.r == 255
@@ -190,48 +190,48 @@ class TestRegister:
         assert result.b == 0
 
     def test_register_with_explicit_type_code(self):
-        @fastpack.register(type_code=0x30)
+        @typepack.register(type_code=0x30)
         class CustomType:
             def __init__(self, value: str):
                 self.value = value
 
-            def __fastpack_encode__(self):
+            def __typepack_encode__(self):
                 return self.value
 
             @classmethod
-            def __fastpack_decode__(cls, data):
+            def __typepack_decode__(cls, data):
                 return cls(data)
 
         obj = CustomType("test")
-        data = fastpack.pack(obj)
-        result = fastpack.unpack(data)
+        data = typepack.pack(obj)
+        result = typepack.unpack(data)
 
         assert isinstance(result, CustomType)
         assert result.value == "test"
 
     def test_duplicate_type_code_raises(self):
-        @fastpack.register(type_code=0x50)
+        @typepack.register(type_code=0x50)
         class TypeA:
-            def __fastpack_encode__(self):
+            def __typepack_encode__(self):
                 return {}
 
             @classmethod
-            def __fastpack_decode__(cls, data):
+            def __typepack_decode__(cls, data):
                 return cls()
 
         with pytest.raises(ValueError, match="already registered"):
-            @fastpack.register(type_code=0x50)
+            @typepack.register(type_code=0x50)
             class TypeB:
-                def __fastpack_encode__(self):
+                def __typepack_encode__(self):
                     return {}
 
                 @classmethod
-                def __fastpack_decode__(cls, data):
+                def __typepack_decode__(cls, data):
                     return cls()
 
     def test_register_without_encode_decode_raises(self):
-        with pytest.raises(TypeError, match="must have __fastpack_encode__"):
-            @fastpack.register
+        with pytest.raises(TypeError, match="must have __typepack_encode__"):
+            @typepack.register
             class InvalidType:
                 pass
 
@@ -246,8 +246,8 @@ class TestMixedStructures:
             price: float
 
         item = Item("Coffee", 4.50)
-        data = fastpack.pack({"item": item, "quantity": 2})
-        result = fastpack.unpack(data)
+        data = typepack.pack({"item": item, "quantity": 2})
+        result = typepack.unpack(data)
 
         assert result["quantity"] == 2
         assert result["item"]["__dataclass__"] == "Item"
@@ -260,8 +260,8 @@ class TestMixedStructures:
             lng: float
 
         coords = [Coord(10.0, 20.0), Coord(30.0, 40.0)]
-        data = fastpack.pack(coords)
-        result = fastpack.unpack(data)
+        data = typepack.pack(coords)
+        result = typepack.unpack(data)
 
         assert len(result) == 2
         assert result[0]["__namedtuple__"] == "Coord"
@@ -278,11 +278,11 @@ class TestMixedStructures:
         config = Config(True, "1.0.0")
         regular_dict = {"debug": True, "version": "1.0.0"}
 
-        config_data = fastpack.pack(config)
-        dict_data = fastpack.pack(regular_dict)
+        config_data = typepack.pack(config)
+        dict_data = typepack.pack(regular_dict)
 
-        config_result = fastpack.unpack(config_data)
-        dict_result = fastpack.unpack(dict_data)
+        config_result = typepack.unpack(config_data)
+        dict_result = typepack.unpack(dict_data)
 
         # Dataclass should have __dataclass__ marker
         assert "__dataclass__" in config_result
@@ -297,11 +297,11 @@ class TestMixedStructures:
         named = Version(1, 2)
         regular = (1, 2)
 
-        named_data = fastpack.pack(named)
-        tuple_data = fastpack.pack(regular)
+        named_data = typepack.pack(named)
+        tuple_data = typepack.pack(regular)
 
-        named_result = fastpack.unpack(named_data)
-        tuple_result = fastpack.unpack(tuple_data)
+        named_result = typepack.unpack(named_data)
+        tuple_result = typepack.unpack(tuple_data)
 
         # NamedTuple should be a dict with __namedtuple__ marker
         assert isinstance(named_result, dict)

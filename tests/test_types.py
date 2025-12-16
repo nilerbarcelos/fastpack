@@ -1,11 +1,11 @@
-"""Tests for fastpack extended types (v0.2.0)."""
+"""Tests for typepack extended types (v0.2.0)."""
 
 from datetime import datetime, date, time, timedelta
 from decimal import Decimal
 from enum import Enum
 from uuid import UUID
 
-import fastpack
+import typepack
 
 
 class TestDatetime:
@@ -13,20 +13,20 @@ class TestDatetime:
 
     def test_datetime_now(self):
         value = datetime(2024, 12, 15, 14, 30, 45)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_datetime_with_microseconds(self):
         value = datetime(2024, 1, 1, 12, 0, 0, 123456)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_datetime_min(self):
         value = datetime(1, 1, 1, 0, 0, 0)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -35,20 +35,20 @@ class TestDate:
 
     def test_date_today(self):
         value = date(2024, 12, 15)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_date_min(self):
         value = date(1, 1, 1)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_date_max(self):
         value = date(9999, 12, 31)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -57,20 +57,20 @@ class TestTime:
 
     def test_time_noon(self):
         value = time(12, 0, 0)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_time_with_microseconds(self):
         value = time(14, 30, 45, 123456)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_time_midnight(self):
         value = time(0, 0, 0)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -79,26 +79,26 @@ class TestTimedelta:
 
     def test_timedelta_days(self):
         value = timedelta(days=5)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_timedelta_hours(self):
         value = timedelta(hours=3, minutes=30)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_timedelta_negative(self):
         value = timedelta(days=-1)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_timedelta_complex(self):
         value = timedelta(days=2, hours=5, minutes=30, seconds=15, microseconds=500)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         # Compare total seconds due to floating point
         assert abs(result.total_seconds() - value.total_seconds()) < 0.001
 
@@ -108,32 +108,32 @@ class TestDecimal:
 
     def test_decimal_integer(self):
         value = Decimal("123")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_decimal_float(self):
         value = Decimal("123.456")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_decimal_negative(self):
         value = Decimal("-99.99")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_decimal_scientific(self):
         value = Decimal("1.23E+10")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_decimal_precision(self):
         value = Decimal("0.123456789012345678901234567890")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -142,14 +142,14 @@ class TestUUID:
 
     def test_uuid_random(self):
         value = UUID("12345678-1234-5678-1234-567812345678")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_uuid_nil(self):
         value = UUID("00000000-0000-0000-0000-000000000000")
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -158,29 +158,29 @@ class TestTuple:
 
     def test_empty(self):
         value = ()
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, tuple)
 
     def test_simple(self):
         value = (1, 2, 3)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, tuple)
 
     def test_mixed(self):
         value = (1, "two", 3.0)
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, tuple)
 
     def test_nested(self):
         value = ((1, 2), (3, 4))
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
 
@@ -189,22 +189,22 @@ class TestSet:
 
     def test_empty(self):
         value = set()
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, set)
 
     def test_integers(self):
         value = {1, 2, 3}
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, set)
 
     def test_strings(self):
         value = {"apple", "banana", "cherry"}
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, set)
 
@@ -214,15 +214,15 @@ class TestFrozenset:
 
     def test_empty(self):
         value = frozenset()
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, frozenset)
 
     def test_integers(self):
         value = frozenset([1, 2, 3])
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
         assert isinstance(result, frozenset)
 
@@ -244,16 +244,16 @@ class TestEnum:
 
     def test_int_enum(self):
         value = Color.RED
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result["__enum__"] is True
         assert result["name"] == "RED"
         assert result["value"] == 1
 
     def test_str_enum(self):
         value = Status.ACTIVE
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result["__enum__"] is True
         assert result["name"] == "ACTIVE"
         assert result["value"] == "active"
@@ -267,8 +267,8 @@ class TestComplexStructures:
             "created_at": datetime(2024, 12, 15, 10, 30, 0),
             "name": "Test",
         }
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result["created_at"] == value["created_at"]
         assert result["name"] == value["name"]
 
@@ -277,8 +277,8 @@ class TestComplexStructures:
             UUID("11111111-1111-1111-1111-111111111111"),
             UUID("22222222-2222-2222-2222-222222222222"),
         ]
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result == value
 
     def test_api_response_with_types(self):
@@ -289,8 +289,8 @@ class TestComplexStructures:
             "tags": {"new", "featured"},
             "coordinates": (40.7128, -74.0060),
         }
-        data = fastpack.pack(value)
-        result = fastpack.unpack(data)
+        data = typepack.pack(value)
+        result = typepack.unpack(data)
         assert result["id"] == value["id"]
         assert result["amount"] == value["amount"]
         assert result["created_at"] == value["created_at"]

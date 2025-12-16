@@ -1,4 +1,4 @@
-# fastpack
+# typepack
 
 Fast, safe binary serialization for Python supporting dataclasses, datetime, Decimal, UUID and custom types.
 
@@ -8,7 +8,7 @@ Fast, safe binary serialization for Python supporting dataclasses, datetime, Dec
 - **Safe** - no arbitrary code execution (unlike pickle)
 - **Compact** - 35-45% smaller than JSON
 - **Native Python types** - datetime, Decimal, UUID, Enum, dataclass, NamedTuple
-- **Extensible** - register custom types with `@fastpack.register`
+- **Extensible** - register custom types with `@typepack.register`
 - **Streaming** - memory-efficient processing for large datasets
 - **Optional C extension** - ~1.5x faster serialization
 - **MessagePack-compatible** - interoperable binary format
@@ -16,19 +16,19 @@ Fast, safe binary serialization for Python supporting dataclasses, datetime, Dec
 ## Installation
 
 ```bash
-pip install fastpack
+pip install typepack
 ```
 
 ## Quick Start
 
 ```python
-import fastpack
+import typepack
 
 # Serialize
-data = fastpack.pack({"name": "Ana", "age": 30, "active": True})
+data = typepack.pack({"name": "Ana", "age": 30, "active": True})
 
 # Deserialize
-obj = fastpack.unpack(data)
+obj = typepack.unpack(data)
 ```
 
 ## Supported Types
@@ -64,7 +64,7 @@ obj = fastpack.unpack(data)
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
-import fastpack
+import typepack
 
 order = {
     "id": UUID("12345678-1234-5678-1234-567812345678"),
@@ -74,8 +74,8 @@ order = {
     "items": (1, 2, 3),
 }
 
-data = fastpack.pack(order)
-restored = fastpack.unpack(data)
+data = typepack.pack(order)
+restored = typepack.unpack(data)
 
 assert restored["id"] == order["id"]
 assert restored["amount"] == order["amount"]
@@ -85,7 +85,7 @@ assert restored["amount"] == order["amount"]
 
 ```python
 from dataclasses import dataclass
-import fastpack
+import typepack
 
 @dataclass
 class User:
@@ -93,47 +93,47 @@ class User:
     age: int
 
 user = User("Ana", 30)
-data = fastpack.pack(user)
-restored = fastpack.unpack(data)
+data = typepack.pack(user)
+restored = typepack.unpack(data)
 # {'__dataclass__': 'User', '__module__': '__main__', 'name': 'Ana', 'age': 30}
 ```
 
 ### Custom Types
 
 ```python
-import fastpack
+import typepack
 
-@fastpack.register
+@typepack.register
 class Money:
     def __init__(self, amount: int, currency: str):
         self.amount = amount
         self.currency = currency
 
-    def __fastpack_encode__(self):
+    def __typepack_encode__(self):
         return {"amount": self.amount, "currency": self.currency}
 
     @classmethod
-    def __fastpack_decode__(cls, data):
+    def __typepack_decode__(cls, data):
         return cls(data["amount"], data["currency"])
 
 money = Money(1000, "USD")
-data = fastpack.pack(money)
-restored = fastpack.unpack(data)  # Money(amount=1000, currency='USD')
+data = typepack.pack(money)
+restored = typepack.unpack(data)  # Money(amount=1000, currency='USD')
 ```
 
 ### Streaming
 
 ```python
-import fastpack
+import typepack
 
 # Write multiple objects to file
 items = [{"id": i} for i in range(1000)]
 with open("data.bin", "wb") as f:
-    fastpack.pack_stream(items, f)
+    typepack.pack_stream(items, f)
 
 # Read lazily (memory efficient)
 with open("data.bin", "rb") as f:
-    for item in fastpack.unpack_stream(f):
+    for item in typepack.unpack_stream(f):
         process(item)
 ```
 
@@ -141,25 +141,25 @@ with open("data.bin", "rb") as f:
 
 ```python
 import json
-import fastpack
+import typepack
 
 obj = {"name": "Ana", "age": 30, "active": True}
 
 json_size = len(json.dumps(obj).encode())  # 42 bytes
-pack_size = len(fastpack.pack(obj))        # 27 bytes
+pack_size = len(typepack.pack(obj))        # 27 bytes
 
-# fastpack: 36% smaller than JSON
+# typepack: 36% smaller than JSON
 ```
 
 ## Performance
 
-fastpack includes an optional C extension for improved performance:
+typepack includes an optional C extension for improved performance:
 
 ```python
-import fastpack
+import typepack
 
-fastpack.is_accelerated()     # True if C extension loaded
-fastpack.has_pybyteswriter()  # True if Python 3.15+ (PyBytesWriter API)
+typepack.is_accelerated()     # True if C extension loaded
+typepack.has_pybyteswriter()  # True if Python 3.15+ (PyBytesWriter API)
 ```
 
 | Operation | C Extension | Pure Python |
@@ -171,46 +171,46 @@ fastpack.has_pybyteswriter()  # True if Python 3.15+ (PyBytesWriter API)
 ### Core Functions
 
 ```python
-fastpack.pack(obj) -> bytes        # Serialize object
-fastpack.unpack(data) -> Any       # Deserialize bytes
+typepack.pack(obj) -> bytes        # Serialize object
+typepack.unpack(data) -> Any       # Deserialize bytes
 ```
 
 ### Streaming Functions
 
 ```python
-fastpack.pack_to(obj, file)        # Write single object to file
-fastpack.unpack_from(file) -> Any  # Read single object from file
+typepack.pack_to(obj, file)        # Write single object to file
+typepack.unpack_from(file) -> Any  # Read single object from file
 
-fastpack.pack_stream(items, file)  # Write multiple objects
-fastpack.unpack_stream(file)       # Iterate over objects (lazy)
+typepack.pack_stream(items, file)  # Write multiple objects
+typepack.unpack_stream(file)       # Iterate over objects (lazy)
 
-fastpack.pack_many(items) -> bytes # Serialize multiple to bytes
-fastpack.unpack_many(data) -> list # Deserialize all at once
-fastpack.iter_unpack(data)         # Iterate over bytes (lazy)
+typepack.pack_many(items) -> bytes # Serialize multiple to bytes
+typepack.unpack_many(data) -> list # Deserialize all at once
+typepack.iter_unpack(data)         # Iterate over bytes (lazy)
 ```
 
 ### Type Registration
 
 ```python
-@fastpack.register
+@typepack.register
 class MyType:
-    def __fastpack_encode__(self): ...
+    def __typepack_encode__(self): ...
     @classmethod
-    def __fastpack_decode__(cls, data): ...
+    def __typepack_decode__(cls, data): ...
 
-fastpack.clear_registry()          # Reset type registry
+typepack.clear_registry()          # Reset type registry
 ```
 
 ### Introspection
 
 ```python
-fastpack.is_accelerated() -> bool      # C extension loaded?
-fastpack.has_pybyteswriter() -> bool   # PyBytesWriter available?
+typepack.is_accelerated() -> bool      # C extension loaded?
+typepack.has_pybyteswriter() -> bool   # PyBytesWriter available?
 ```
 
 ## Binary Format
 
-fastpack uses MessagePack-compatible binary format:
+typepack uses MessagePack-compatible binary format:
 
 | Type | Format |
 |------|--------|
@@ -229,7 +229,7 @@ fastpack uses MessagePack-compatible binary format:
 
 ## Comparison
 
-| Feature | fastpack | msgpack | pickle | json |
+| Feature | typepack | msgpack | pickle | json |
 |---------|----------|---------|--------|------|
 | Safe | Yes | Yes | **No** | Yes |
 | Zero deps | Yes | No | Yes | Yes |

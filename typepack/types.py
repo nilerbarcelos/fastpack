@@ -1,5 +1,5 @@
 """
-Type registry and extension system for fastpack.
+Type registry and extension system for typepack.
 
 Allows registering custom types with encode/decode functions.
 """
@@ -22,17 +22,17 @@ def register(cls: Type = None, *, type_code: int = None):
     Can be used as a decorator or called directly.
 
     Usage as decorator:
-        @fastpack.register
+        @typepack.register
         class MyClass:
             ...
 
     Usage with explicit type code:
-        @fastpack.register(type_code=0x20)
+        @typepack.register(type_code=0x20)
         class MyClass:
             ...
 
     The class must have either:
-    - __fastpack_encode__ and __fastpack_decode__ methods
+    - __typepack_encode__ and __typepack_decode__ methods
     - Be a dataclass (auto-handled)
     - Be a NamedTuple (auto-handled)
     """
@@ -61,9 +61,9 @@ def _register_type(cls: Type, type_code: int = None) -> None:
         raise ValueError(f"Type code {type_code} already registered for {existing}")
 
     # Determine encode/decode functions
-    if hasattr(cls, "__fastpack_encode__") and hasattr(cls, "__fastpack_decode__"):
-        encode_fn = cls.__fastpack_encode__
-        decode_fn = cls.__fastpack_decode__
+    if hasattr(cls, "__typepack_encode__") and hasattr(cls, "__typepack_decode__"):
+        encode_fn = cls.__typepack_encode__
+        decode_fn = cls.__typepack_decode__
     elif is_dataclass(cls):
         encode_fn = _dataclass_encode
         decode_fn = lambda data: _dataclass_decode(cls, data)
@@ -72,8 +72,8 @@ def _register_type(cls: Type, type_code: int = None) -> None:
         decode_fn = lambda data: _namedtuple_decode(cls, data)
     else:
         raise TypeError(
-            f"Type {cls.__name__} must have __fastpack_encode__ and "
-            "__fastpack_decode__ methods, or be a dataclass/NamedTuple"
+            f"Type {cls.__name__} must have __typepack_encode__ and "
+            "__typepack_decode__ methods, or be a dataclass/NamedTuple"
         )
 
     _type_registry[cls] = (type_code, encode_fn, decode_fn)
